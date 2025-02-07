@@ -55,4 +55,8 @@ dependencies {
     // Coroutine
     implementation(libs.androidx.coroutines.core)
     implementation(libs.androidx.coroutines.android)
+
+    // Firebase
+    implementation(platform(libs.androidx.firebase.bom))
+    implementation(libs.androidx.firebase.auth)
 }

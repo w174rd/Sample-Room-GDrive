@@ -12,6 +12,7 @@ constraintlayout = "2.1.4"
 room = "2.6.1"
 ksp = "2.1.0-1.0.29"
 coroutines = "1.8.1"
+firebase = "33.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -29,6 +30,10 @@ androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = 
 
 androidx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 androidx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+androidx-firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase" }
+androidx-firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
