@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.firebase)
 }
 
 android {
@@ -34,6 +35,10 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
@@ -52,11 +57,21 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
-    // Coroutine
+    // Coroutines
     implementation(libs.androidx.coroutines.core)
     implementation(libs.androidx.coroutines.android)
+
+    // Lifecycle
+    implementation (libs.androidx.lifecycle.viewmodel)
 
     // Firebase
     implementation(platform(libs.androidx.firebase.bom))
     implementation(libs.androidx.firebase.auth)
+//    implementation(libs.androidx.play.services.auth)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.androidx.googleid)
+
+    // Gson
+    implementation(libs.androidx.gson)
 }

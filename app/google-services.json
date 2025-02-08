@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "588135051296",
+    "project_id": "smaple-room-gdrive",
+    "storage_bucket": "smaple-room-gdrive.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:588135051296:android:e27d12130e52cc2e36cc45",
+        "android_client_info": {
+          "package_name": "com.w174rd.sample_room_gdrive"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "588135051296-7ab9sftl33aijpq3bgdcuctutgje3guc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.w174rd.sample_room_gdrive",
+            "certificate_hash": "76c3fd67054d1f8ef5b3e58f426f14b4c0efbbcb"
+          }
+        },
+        {
+          "client_id": "588135051296-f3dq8dp84dp8hbeu2ikrlpob10sitbe0.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAtTY7nY5CJMn_9cFPEs1nKEwfb2XNoEpw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "588135051296-f3dq8dp84dp8hbeu2ikrlpob10sitbe0.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

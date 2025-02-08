@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Sample Room GDrive</string>
+    <string name="default_web_client_id" translatable="false">588135051296-f3dq8dp84dp8hbeu2ikrlpob10sitbe0.apps.googleusercontent.com</string>
+    <string name="unknown">Unknown</string>
+    <string name="login_google">Login Google\n</string>
+    <string name="logout">Logout\n</string>
 </resources>
