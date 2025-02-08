@@ -8,42 +8,59 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.room.Room
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.w174rd.sample_room_gdrive.R
 import com.w174rd.sample_room_gdrive.databinding.ActivityMainBinding
+import com.w174rd.sample_room_gdrive.db.DataBase
 import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
+import com.w174rd.sample_room_gdrive.viewmodel.DatabaseViewModel
 import com.w174rd.sample_room_gdrive.viewmodel.SignInViewModel
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
 
+    lateinit var db: DataBase
+
     private lateinit var binding: ActivityMainBinding
 
-    private val viewModel by lazy {
+    private val viewModelAuth by lazy {
         ViewModelProvider(this)[SignInViewModel::class.java]
+    }
+
+    private val viewModelDB by lazy {
+        ViewModelProvider(this)[DatabaseViewModel::class.java]
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // Contruct view binding
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Init Room DB
+        db = Room.databaseBuilder(applicationContext, DataBase::class.java, "sample-db").build()
+
         checkAuth()
-
-        binding.btnLogin.setOnClickListener {
-            viewModel.signIn(this)
-        }
-
-        binding.btnLogout.setOnClickListener {
-            viewModel.signOutGoogle()
-            checkAuth()
-        }
-
+        onClick()
         initViewModel()
+    }
+
+    private fun onClick() {
+        binding.apply {
+            btnLogin.setOnClickListener {
+                viewModelAuth.signIn(this@MainActivity)
+            }
+
+            btnLogout.setOnClickListener {
+                viewModelAuth.signOutGoogle()
+                checkAuth()
+            }
+        }
     }
 
     private fun checkAuth() {
@@ -58,7 +75,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initViewModel() {
-        viewModel.onResponse.observe(this) {
+        /** ============ DATA BASE ============== */
+        viewModelDB.getData(db = db)
+        viewModelDB.responseData.observe(this) {
+            it.forEach {
+                println("id: ${it.id}, name: ${it.name}")
+            }
+        }
+
+        /** ============ FIREBASE AUTH ============== */
+        viewModelAuth.onResponse.observe(this) {
             when(it.status) {
                 OnResponse.LOADING -> {
                     Toast.makeText(this, "Loading...", Toast.LENGTH_SHORT).show()
@@ -76,6 +102,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+    /** ============================================================================================ */
+
     fun showAlertDialog(context: Context, title: String, message: String? = "") {
         AlertDialog.Builder(context)
             .setTitle(title)
@@ -83,9 +112,6 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Ok") { dialog, _ ->
                 dialog.dismiss()
             }
-//            .setNegativeButton("Batal") { dialog, _ ->
-//                dialog.dismiss()
-//            }
             .show()
     }
 

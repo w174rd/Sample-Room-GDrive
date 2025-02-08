@@ -17,6 +17,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.w174rd.sample_room_gdrive.R
 import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SignInViewModel : ViewModel(){
@@ -35,7 +36,7 @@ class SignInViewModel : ViewModel(){
             .addCredentialOption(googleIdOption)
             .build()
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             try {
                 val result: GetCredentialResponse = credentialManager.getCredential( //import from androidx.CredentialManager
                     request = request,
