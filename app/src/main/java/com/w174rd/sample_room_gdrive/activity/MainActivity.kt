@@ -1,10 +1,13 @@
 package com.w174rd.sample_room_gdrive.activity
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
@@ -20,7 +23,7 @@ import com.w174rd.sample_room_gdrive.model.Entity
 import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
 import com.w174rd.sample_room_gdrive.viewmodel.DatabaseViewModel
-import com.w174rd.sample_room_gdrive.viewmodel.SignInViewModel
+import com.w174rd.sample_room_gdrive.viewmodel.SignInV2ViewModel
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
@@ -31,11 +34,20 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val viewModelAuth by lazy {
-        ViewModelProvider(this)[SignInViewModel::class.java]
+        ViewModelProvider(this)[SignInV2ViewModel::class.java]
     }
 
     private val viewModelDB by lazy {
         ViewModelProvider(this)[DatabaseViewModel::class.java]
+    }
+
+    private val onActionResultGoogle = registerForResult { requestCode, resultCode, data ->
+        viewModelAuth.onActivityResult(
+            activity = this,
+            requestCode = 1000,
+            resultCode = resultCode,
+            data = data
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,6 +60,8 @@ class MainActivity : AppCompatActivity() {
 
         // Init Room DB
         db = Room.databaseBuilder(applicationContext, DataBase::class.java, "sample-db").build()
+
+        viewModelAuth.initialGoogleAccount(context = this)
 
         setupRecycler()
         checkAuth()
@@ -63,7 +77,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             btnLogin.setOnClickListener {
-                viewModelAuth.signIn(this@MainActivity)
+//                viewModelAuth.signIn(this@MainActivity)
+                viewModelAuth.signIn(activityResult = onActionResultGoogle)
             }
 
             btnLogout.setOnClickListener {
@@ -106,6 +121,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 OnResponse.ERROR -> {
                     checkAuth()
+                    viewModelAuth.signOutGoogle()
                     val error = getDataMeta(it.error)
                     showAlertDialog(context = this, title = "Error", message = error.message)
                 }
@@ -149,5 +165,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         return dataMeta
+    }
+
+    private fun AppCompatActivity.registerForResult(onResult: (requestCode: Int, resultCode: Int, data: Intent?) -> Unit): ActivityResultLauncher<Intent> {
+        return this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val intent = result.data
+            val requestCode = intent?.getIntExtra("REQUEST_CODE", -1) ?: -1
+            onResult(requestCode, result.resultCode, intent)
+        }
     }
 }

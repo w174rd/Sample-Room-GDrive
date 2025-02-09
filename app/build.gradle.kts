@@ -68,10 +68,10 @@ dependencies {
     // Firebase
     implementation(platform(libs.androidx.firebase.bom))
     implementation(libs.androidx.firebase.auth)
-//    implementation(libs.androidx.play.services.auth)
-    implementation(libs.androidx.credentials)
-    implementation(libs.androidx.credentials.play.services.auth)
-    implementation(libs.androidx.googleid)
+    implementation(libs.androidx.play.services.auth)
+//    implementation(libs.androidx.credentials)
+//    implementation(libs.androidx.credentials.play.services.auth)
+//    implementation(libs.androidx.googleid)
 
     // Gson
     implementation(libs.androidx.gson)
