@@ -39,6 +39,13 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    packagingOptions {
+        resources {
+            // Pick the first instance of the file
+            pickFirsts.add("META-INF/DEPENDENCIES")
+        }
+    }
 }
 
 dependencies {
@@ -72,6 +79,10 @@ dependencies {
 //    implementation(libs.androidx.credentials)
 //    implementation(libs.androidx.credentials.play.services.auth)
 //    implementation(libs.androidx.googleid)
+    implementation(libs.androidx.service.drive)
+    implementation(libs.androidx.okhttp)
+    implementation(libs.androidx.google.api.client.android)
+    implementation(libs.androidx.google.http.client.gson)
 
     // Gson
     implementation(libs.androidx.gson)

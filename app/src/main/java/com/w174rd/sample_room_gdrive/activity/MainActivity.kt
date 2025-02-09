@@ -3,6 +3,7 @@ package com.w174rd.sample_room_gdrive.activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -23,6 +24,7 @@ import com.w174rd.sample_room_gdrive.model.Entity
 import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
 import com.w174rd.sample_room_gdrive.viewmodel.DatabaseViewModel
+import com.w174rd.sample_room_gdrive.viewmodel.GoogleDriveViewModel
 import com.w174rd.sample_room_gdrive.viewmodel.SignInV2ViewModel
 
 class MainActivity : AppCompatActivity() {
@@ -39,6 +41,10 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModelDB by lazy {
         ViewModelProvider(this)[DatabaseViewModel::class.java]
+    }
+
+    private val viewModelGDrive by lazy {
+        ViewModelProvider(this)[GoogleDriveViewModel::class.java]
     }
 
     private val onActionResultGoogle = registerForResult { requestCode, resultCode, data ->
@@ -85,6 +91,10 @@ class MainActivity : AppCompatActivity() {
                 viewModelAuth.signOutGoogle()
                 checkAuth()
             }
+
+            btnBackup.setOnClickListener {
+                viewModelGDrive.uploadDatabaseToDrive(activity = this@MainActivity)
+            }
         }
     }
 
@@ -117,6 +127,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 OnResponse.SUCCESS -> {
                     showAlertDialog(context = this, title = "Success", message = it.data.toString())
+                    Log.d("TOKEN", it.data.toString())
                     checkAuth()
                 }
                 OnResponse.ERROR -> {
