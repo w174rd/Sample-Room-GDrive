@@ -24,7 +24,6 @@ class DatabaseViewModel: ViewModel() {
     }
 
     fun insertData(db: DataBase, data: Entity?) {
-        status.postValue(OnResponse.loading())
         viewModelScope.launch(Dispatchers.Default) {
             data?.let {
                 db.entityDao().insert(data = it)

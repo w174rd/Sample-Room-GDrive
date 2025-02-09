@@ -8,12 +8,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.room.Room
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.w174rd.sample_room_gdrive.R
+import com.w174rd.sample_room_gdrive.adaptor.LocalDataAdapter
 import com.w174rd.sample_room_gdrive.databinding.ActivityMainBinding
 import com.w174rd.sample_room_gdrive.db.DataBase
+import com.w174rd.sample_room_gdrive.model.Entity
 import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
 import com.w174rd.sample_room_gdrive.viewmodel.DatabaseViewModel
@@ -23,6 +26,7 @@ class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
 
     lateinit var db: DataBase
+    lateinit var mAdapter: LocalDataAdapter
 
     private lateinit var binding: ActivityMainBinding
 
@@ -45,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         // Init Room DB
         db = Room.databaseBuilder(applicationContext, DataBase::class.java, "sample-db").build()
 
+        setupRecycler()
         checkAuth()
         onClick()
         initViewModel()
@@ -52,6 +57,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun onClick() {
         binding.apply {
+            btnAddData.setOnClickListener {
+                print(etData.text.toString())
+                viewModelDB.insertData(db, Entity(name = etData.text.toString()))
+            }
+
             btnLogin.setOnClickListener {
                 viewModelAuth.signIn(this@MainActivity)
             }
@@ -67,10 +77,12 @@ class MainActivity : AppCompatActivity() {
         val user = Firebase.auth.currentUser
         if (user != null) {
             binding.btnLogin.visibility = View.GONE
-            binding.btnLogout.visibility = View.VISIBLE
+            binding.groupLogin.visibility = View.VISIBLE
+
+            binding.txtEmail.text = resources.getString(R.string.account_, user.email)
         } else {
             binding.btnLogin.visibility = View.VISIBLE
-            binding.btnLogout.visibility = View.GONE
+            binding.groupLogin.visibility = View.GONE
         }
     }
 
@@ -78,9 +90,8 @@ class MainActivity : AppCompatActivity() {
         /** ============ DATA BASE ============== */
         viewModelDB.getData(db = db)
         viewModelDB.responseData.observe(this) {
-            it.forEach {
-                println("id: ${it.id}, name: ${it.name}")
-            }
+            mAdapter.submitList(it)
+            binding.etData.text?.clear()
         }
 
         /** ============ FIREBASE AUTH ============== */
@@ -99,6 +110,15 @@ class MainActivity : AppCompatActivity() {
                     showAlertDialog(context = this, title = "Error", message = error.message)
                 }
             }
+        }
+    }
+
+    private fun setupRecycler() {
+        mAdapter = LocalDataAdapter()
+
+        binding.recyclerView.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = mAdapter
         }
     }
 
