@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             btnBackup.setOnClickListener {
-                viewModelGDrive.uploadDatabaseToDrive(context = this@MainActivity)
+                viewModelGDrive.uploadDatabaseToDrive(activity = this@MainActivity)
             }
         }
     }
