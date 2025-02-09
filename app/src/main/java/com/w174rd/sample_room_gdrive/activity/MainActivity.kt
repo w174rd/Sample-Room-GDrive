@@ -2,6 +2,7 @@ package com.w174rd.sample_room_gdrive.activity
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -20,6 +21,7 @@ import com.w174rd.sample_room_gdrive.model.Entity
 import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
 import com.w174rd.sample_room_gdrive.viewmodel.DatabaseViewModel
+import com.w174rd.sample_room_gdrive.viewmodel.GoogleDriveViewModel
 import com.w174rd.sample_room_gdrive.viewmodel.SignInViewModel
 
 class MainActivity : AppCompatActivity() {
@@ -36,6 +38,10 @@ class MainActivity : AppCompatActivity() {
 
     private val viewModelDB by lazy {
         ViewModelProvider(this)[DatabaseViewModel::class.java]
+    }
+
+    private val viewModelGDrive by lazy {
+        ViewModelProvider(this)[GoogleDriveViewModel::class.java]
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +75,10 @@ class MainActivity : AppCompatActivity() {
             btnLogout.setOnClickListener {
                 viewModelAuth.signOutGoogle()
                 checkAuth()
+            }
+
+            btnBackup.setOnClickListener {
+                viewModelGDrive.uploadDatabaseToDrive(context = this@MainActivity)
             }
         }
     }
