@@ -26,9 +26,11 @@ class DatabaseViewModel: ViewModel() {
     fun insertData(db: DataBase, data: Entity?) {
         viewModelScope.launch(Dispatchers.Default) {
             data?.let {
-                db.entityDao().insert(data = it)
-                getData(db = db)
-                status.postValue(OnResponse.success())
+                if (data.name?.isEmpty() == false) {
+                    db.entityDao().insert(data = it)
+                    getData(db = db)
+                    status.postValue(OnResponse.success())
+                }
             }
         }
     }
