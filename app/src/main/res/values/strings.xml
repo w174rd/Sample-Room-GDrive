@@ -12,4 +12,5 @@
     <string name="account_">account: %1$s</string>
     <string name="restore_from_GDrive">Restore from GDrive</string>
     <string name="backup_to_GDrive">Backup to GDrive</string>
+    <string name="loading_">Loading...</string>
 </resources>

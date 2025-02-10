@@ -1,15 +1,9 @@
 package com.w174rd.sample_room_gdrive.activity
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
-import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -21,8 +15,12 @@ import com.w174rd.sample_room_gdrive.adaptor.LocalDataAdapter
 import com.w174rd.sample_room_gdrive.databinding.ActivityMainBinding
 import com.w174rd.sample_room_gdrive.db.DataBase
 import com.w174rd.sample_room_gdrive.model.Entity
-import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
+import com.w174rd.sample_room_gdrive.utils.Functions.dismissProgressDialog
+import com.w174rd.sample_room_gdrive.utils.Functions.getDataMeta
+import com.w174rd.sample_room_gdrive.utils.Functions.registerForResult
+import com.w174rd.sample_room_gdrive.utils.Functions.showAlertDialog
+import com.w174rd.sample_room_gdrive.utils.Functions.showProgressDialog
 import com.w174rd.sample_room_gdrive.viewmodel.DatabaseViewModel
 import com.w174rd.sample_room_gdrive.viewmodel.GoogleDriveViewModel
 import com.w174rd.sample_room_gdrive.viewmodel.SignInViewModel
@@ -123,17 +121,19 @@ class MainActivity : AppCompatActivity() {
         viewModelAuth.onResponse.observe(this) {
             when(it.status) {
                 OnResponse.LOADING -> {
-                    Toast.makeText(this, "Loading...", Toast.LENGTH_SHORT).show()
+                    showProgressDialog(this@MainActivity)
                 }
                 OnResponse.SUCCESS -> {
-                    showAlertDialog(context = this, title = "Success", message = it.data.toString())
+                    dismissProgressDialog()
+//                    showAlertDialog(context = this, title = "Success", message = it.data.toString())
                     Log.d("TOKEN", it.data.toString())
                     checkAuth()
                 }
                 OnResponse.ERROR -> {
+                    dismissProgressDialog()
                     checkAuth()
                     viewModelAuth.signOutGoogle()
-                    val error = getDataMeta(it.error)
+                    val error = getDataMeta(this@MainActivity, it.error)
                     showAlertDialog(context = this, title = "Error", message = error.message)
                 }
             }
@@ -146,43 +146,6 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
             adapter = mAdapter
-        }
-    }
-
-
-    /** ============================================================================================ */
-
-    fun showAlertDialog(context: Context, title: String, message: String? = "") {
-        AlertDialog.Builder(context)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton("Ok") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
-    }
-
-
-    private fun getDataMeta(data: Any?): Meta {
-        var dataMeta = Meta()
-        dataMeta.error = 1
-        dataMeta.code = 0
-        dataMeta.message = resources.getString(R.string.unknown)
-
-        try {
-            dataMeta = data as Meta
-        } catch (e: Exception) {
-            Toast.makeText(this, "getDataMeta() ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-
-        return dataMeta
-    }
-
-    private fun AppCompatActivity.registerForResult(onResult: (requestCode: Int, resultCode: Int, data: Intent?) -> Unit): ActivityResultLauncher<Intent> {
-        return this.registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            val intent = result.data
-            val requestCode = intent?.getIntExtra("REQUEST_CODE", -1) ?: -1
-            onResult(requestCode, result.resultCode, intent)
         }
     }
 }
