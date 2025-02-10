@@ -47,6 +47,8 @@ class GoogleDriveViewModel: ViewModel() {
         onResponse.postValue(OnResponse.loading())
 
         val dbFile = java.io.File(activity.getDatabasePath("sample-db").absolutePath)
+        val dbFileShm = java.io.File(activity.getDatabasePath("sample-db-shm").absolutePath)
+        val dbFileWal = java.io.File(activity.getDatabasePath("sample-db-wal").absolutePath)
 
         if (!dbFile.exists()) {
             Log.e("GoogleDriveHelper", dbFile.path)
@@ -57,18 +59,39 @@ class GoogleDriveViewModel: ViewModel() {
         val driveService = getGoogleDriveService(activity = activity)
 
         val fileMetadata = File().apply {
-            name = "backup_room_db.sqlite"
-            parents = listOf("appDataFolder") // Simpan di folder aplikasi di Google Drive
+            name = "sample-db"
+            parents = listOf("appDataFolder")
+        }
+
+        val fileMetadataShm = File().apply {
+            name = "sample-db-shm"
+            parents = listOf("appDataFolder")
+        }
+
+        val fileMetadataWal = File().apply {
+            name = "sample-db-wal"
+            parents = listOf("appDataFolder")
         }
 
         val mediaContent = FileContent("", dbFile)
+        val mediaContentShm = FileContent("", dbFileShm)
+        val mediaContentWal = FileContent("", dbFileWal)
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val file = driveService.files().create(fileMetadata, mediaContent)
                     .setFields("id")
                     .execute()
-                onResponse.postValue(OnResponse.success("File uploaded: ${file.id}"))
+
+                val fileShm = driveService.files().create(fileMetadataShm, mediaContentShm)
+                    .setFields("id")
+                    .execute()
+
+                val fileWal = driveService.files().create(fileMetadataWal, mediaContentWal)
+                    .setFields("id")
+                    .execute()
+
+                onResponse.postValue(OnResponse.success("File uploaded: \ndb: ${file.name} \nshm: ${fileShm.name} \nwal: ${fileWal.name}"))
             } catch (e: Exception) {
                 onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "Error uploading file: ${e.message}")))
             }
