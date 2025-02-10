@@ -138,6 +138,24 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        /** ============ GOOGLE DRIVE ============== */
+        viewModelGDrive.onResponse.observe(this) {
+            when(it.status) {
+                OnResponse.LOADING -> {
+                    showProgressDialog(this@MainActivity)
+                }
+                OnResponse.SUCCESS -> {
+                    dismissProgressDialog()
+                    showAlertDialog(context = this, title = "Success", message = it.data.toString())
+                }
+                OnResponse.ERROR -> {
+                    dismissProgressDialog()
+                    val error = getDataMeta(this@MainActivity, it.error)
+                    showAlertDialog(context = this, title = "Error", message = error.message)
+                }
+            }
+        }
     }
 
     private fun setupRecycler() {

@@ -3,6 +3,7 @@ package com.w174rd.sample_room_gdrive.viewmodel
 import android.accounts.Account
 import android.app.Activity
 import android.util.Log
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -12,10 +13,14 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
+import com.w174rd.sample_room_gdrive.model.Meta
+import com.w174rd.sample_room_gdrive.model.OnResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class GoogleDriveViewModel: ViewModel() {
+
+    val onResponse = MutableLiveData<OnResponse<Any>>()
 
     private fun getGoogleDriveService(activity: Activity): Drive {
         val account = GoogleSignIn.getLastSignedInAccount(activity)
@@ -38,10 +43,14 @@ class GoogleDriveViewModel: ViewModel() {
     }
 
     fun uploadDatabaseToDrive(activity: Activity) {
+
+        onResponse.postValue(OnResponse.loading())
+
         val dbFile = java.io.File(activity.getDatabasePath("sample-db").absolutePath)
 
         if (!dbFile.exists()) {
             Log.e("GoogleDriveHelper", dbFile.path)
+            onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "dbFile no exist")))
             return
         }
 
@@ -59,9 +68,9 @@ class GoogleDriveViewModel: ViewModel() {
                 val file = driveService.files().create(fileMetadata, mediaContent)
                     .setFields("id")
                     .execute()
-                Log.d("GoogleDriveHelper", "File uploaded: ${file.id}")
+                onResponse.postValue(OnResponse.success("File uploaded: ${file.id}"))
             } catch (e: Exception) {
-                Log.e("GoogleDriveHelper", "Error uploading file: ${e.message}")
+                onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "Error uploading file: ${e.message}")))
             }
         }
     }
