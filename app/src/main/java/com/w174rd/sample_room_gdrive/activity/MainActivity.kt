@@ -16,6 +16,7 @@ import com.w174rd.sample_room_gdrive.databinding.ActivityMainBinding
 import com.w174rd.sample_room_gdrive.db.DataBase
 import com.w174rd.sample_room_gdrive.model.Entity
 import com.w174rd.sample_room_gdrive.model.OnResponse
+import com.w174rd.sample_room_gdrive.utils.Attributes
 import com.w174rd.sample_room_gdrive.utils.Functions.dismissProgressDialog
 import com.w174rd.sample_room_gdrive.utils.Functions.getDataMeta
 import com.w174rd.sample_room_gdrive.utils.Functions.registerForResult
@@ -48,7 +49,7 @@ class MainActivity : AppCompatActivity() {
     private val onActionResultGoogle = registerForResult { requestCode, resultCode, data ->
         viewModelAuth.onActivityResult(
             activity = this,
-            requestCode = 1000,
+            requestCode = Attributes.signIn.REQUEST_CODE,
             resultCode = resultCode,
             data = data
         )
@@ -63,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Init Room DB
-        db = Room.databaseBuilder(applicationContext, DataBase::class.java, "sample-db").build()
+        db = Room.databaseBuilder(applicationContext, DataBase::class.java, Attributes.database.name).build()
 
         viewModelAuth.initialGoogleAccount(context = this)
 
@@ -92,6 +93,10 @@ class MainActivity : AppCompatActivity() {
 
             btnBackup.setOnClickListener {
                 viewModelGDrive.uploadDatabaseToDrive(activity = this@MainActivity)
+            }
+
+            btnRestore.setOnClickListener {
+                viewModelGDrive.downloadDatabaseFromDrive(activity = this@MainActivity)
             }
         }
     }
@@ -148,6 +153,7 @@ class MainActivity : AppCompatActivity() {
                 OnResponse.SUCCESS -> {
                     dismissProgressDialog()
                     showAlertDialog(context = this, title = "Success", message = it.data.toString())
+                    viewModelDB.getData(db = db)
                 }
                 OnResponse.ERROR -> {
                     dismissProgressDialog()

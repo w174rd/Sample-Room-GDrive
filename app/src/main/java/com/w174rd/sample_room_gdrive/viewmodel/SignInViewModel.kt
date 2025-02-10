@@ -19,6 +19,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.w174rd.sample_room_gdrive.R
 import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
+import com.w174rd.sample_room_gdrive.utils.Attributes
 
 class SignInViewModel: ViewModel() {
 
@@ -98,7 +99,7 @@ class SignInViewModel: ViewModel() {
     }
 
     fun onActivityResult(activity: Activity, requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == 1000) {
+        if (requestCode == Attributes.signIn.REQUEST_CODE) {
             /** GOOGLE */
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             if (task.isSuccessful) handleSignInResult(activity, task)

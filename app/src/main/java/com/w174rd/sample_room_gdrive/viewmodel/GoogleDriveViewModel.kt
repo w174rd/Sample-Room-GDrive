@@ -15,8 +15,11 @@ import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
 import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
+import com.w174rd.sample_room_gdrive.utils.Attributes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.FileOutputStream
+
 
 class GoogleDriveViewModel: ViewModel() {
 
@@ -42,13 +45,15 @@ class GoogleDriveViewModel: ViewModel() {
             .build()
     }
 
+    // Upload database to Google Drive
+
     fun uploadDatabaseToDrive(activity: Activity) {
 
         onResponse.postValue(OnResponse.loading())
 
-        val dbFile = java.io.File(activity.getDatabasePath("sample-db").absolutePath)
-        val dbFileShm = java.io.File(activity.getDatabasePath("sample-db-shm").absolutePath)
-        val dbFileWal = java.io.File(activity.getDatabasePath("sample-db-wal").absolutePath)
+        val dbFile = java.io.File(activity.getDatabasePath(Attributes.database.name).absolutePath)
+        val dbFileShm = java.io.File(activity.getDatabasePath("${Attributes.database.name}-shm").absolutePath)
+        val dbFileWal = java.io.File(activity.getDatabasePath("${Attributes.database.name}-wal").absolutePath)
 
         if (!dbFile.exists()) {
             Log.e("GoogleDriveHelper", dbFile.path)
@@ -59,17 +64,17 @@ class GoogleDriveViewModel: ViewModel() {
         val driveService = getGoogleDriveService(activity = activity)
 
         val fileMetadata = File().apply {
-            name = "sample-db"
+            name = Attributes.database.name
             parents = listOf("appDataFolder")
         }
 
         val fileMetadataShm = File().apply {
-            name = "sample-db-shm"
+            name = "${Attributes.database.name}-shm"
             parents = listOf("appDataFolder")
         }
 
         val fileMetadataWal = File().apply {
-            name = "sample-db-wal"
+            name = "${Attributes.database.name}-wal"
             parents = listOf("appDataFolder")
         }
 
@@ -91,10 +96,67 @@ class GoogleDriveViewModel: ViewModel() {
                     .setFields("id")
                     .execute()
 
-                onResponse.postValue(OnResponse.success("File uploaded: \ndb: ${file.name} \nshm: ${fileShm.name} \nwal: ${fileWal.name}"))
+                onResponse.postValue(OnResponse.success("Database uploaded successfully"))
             } catch (e: Exception) {
                 onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "Error uploading file: ${e.message}")))
             }
         }
     }
+
+    // Upload database to Google Drive
+
+    fun downloadDatabaseFromDrive(activity: Activity) {
+        onResponse.postValue(OnResponse.loading())
+
+        val driveService = getGoogleDriveService(activity)
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Cari file di Google Drive (appDataFolder)
+                val query = "name='${Attributes.database.name}' and 'appDataFolder' in parents"
+                val result = driveService.files().list().setQ(query).setSpaces("appDataFolder").execute()
+
+                if (result.files.isEmpty()) {
+                    onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "Database file not found in Drive")))
+                    return@launch
+                }
+
+                val fileId = result.files[0].id
+                val dbPath = activity.getDatabasePath(Attributes.database.name).absolutePath
+                val outputStream = FileOutputStream(dbPath)
+
+                // Unduh file dari Google Drive
+                driveService.files().get(fileId).executeMediaAndDownloadTo(outputStream)
+                outputStream.close()
+
+                // **Lakukan hal yang sama untuk file SHM & WAL**
+                downloadFileFromDrive(driveService, activity, "${Attributes.database.name}-shm")
+                downloadFileFromDrive(driveService, activity, "${Attributes.database.name}-wal")
+
+                onResponse.postValue(OnResponse.success("Database restore successfully"))
+
+            } catch (e: Exception) {
+                onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "Error restore file: ${e.message}")))
+            }
+        }
+    }
+
+    private fun downloadFileFromDrive(driveService: Drive, activity: Activity, fileName: String) {
+        try {
+            val query = "name='$fileName' and 'appDataFolder' in parents"
+            val result = driveService.files().list().setQ(query).setSpaces("appDataFolder").execute()
+
+            if (result.files.isNotEmpty()) {
+                val fileId = result.files[0].id
+                val filePath = activity.getDatabasePath(fileName).absolutePath
+                val outputStream = FileOutputStream(filePath)
+
+                driveService.files().get(fileId).executeMediaAndDownloadTo(outputStream)
+                outputStream.close()
+            }
+        } catch (e: Exception) {
+            Log.e("GoogleDriveHelper", "Failed to download $fileName: ${e.message}")
+        }
+    }
+
 }
