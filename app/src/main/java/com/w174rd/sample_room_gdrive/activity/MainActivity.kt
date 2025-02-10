@@ -25,7 +25,7 @@ import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
 import com.w174rd.sample_room_gdrive.viewmodel.DatabaseViewModel
 import com.w174rd.sample_room_gdrive.viewmodel.GoogleDriveViewModel
-import com.w174rd.sample_room_gdrive.viewmodel.SignInV2ViewModel
+import com.w174rd.sample_room_gdrive.viewmodel.SignInViewModel
 
 class MainActivity : AppCompatActivity() {
     private val TAG = "MainActivity"
@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val viewModelAuth by lazy {
-        ViewModelProvider(this)[SignInV2ViewModel::class.java]
+        ViewModelProvider(this)[SignInViewModel::class.java]
     }
 
     private val viewModelDB by lazy {
