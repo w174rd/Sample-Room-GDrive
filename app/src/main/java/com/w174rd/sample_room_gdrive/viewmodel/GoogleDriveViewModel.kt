@@ -165,18 +165,29 @@ class GoogleDriveViewModel: ViewModel() {
 
             // Sync logic
             if (driveData.dbVersion <= 1) {
-                val localIds = localData.map { it.id }.toSet()
+                val localMap = localData.associateBy { it.id }
                 val entityLocalData = arrayListOf<Entity>()
 
+//                driveData.entityData.forEach { drive ->
+//                    if (drive.id !in localMap) {
+//                        Log.e("SYNC_PROCESS", "Menambahkan drive.id ${drive.id} ke entityLocalData")
+//                        entityLocalData.add(
+//                            Entity(
+//                                id = drive.id,
+//                                name = drive.value
+//                            )
+//                        )
+//                    }
+//                }
+
                 driveData.entityData.forEach { drive ->
-                    if (drive.id !in localIds) {
-                        Log.e("SYNC_PROCESS", "Menambahkan drive.id ${drive.id} ke entityLocalData")
-                        entityLocalData.add(
-                            Entity(
-                                id = drive.id,
-                                name = drive.value
-                            )
-                        )
+                    val localEntity = localMap[drive.id]
+
+                    if (localEntity == null) {
+                        entityLocalData.add(Entity(id = drive.id, name = drive.value))
+                    } else if (localEntity.name != drive.value) {
+                        Log.e("SYNC", "Memperbarui data: ${drive.value}")
+                        entityLocalData.add(Entity(name = drive.value))
                     }
                 }
 

@@ -1,5 +1,6 @@
 package com.w174rd.sample_room_gdrive.adaptor
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -17,11 +18,12 @@ class LocalDataAdapter : ListAdapter<Entity, LocalDataAdapter.ViewHolder>(DIFF_C
         return ViewHolder(binding)
     }
 
+    @SuppressLint("SetTextI18n")
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
         val data = getItem(position)
 
         viewHolder.binding.apply {
-            txtName.text = data.name
+            txtName.text = "${data.id}: ${data.name}"
         }
     }
 

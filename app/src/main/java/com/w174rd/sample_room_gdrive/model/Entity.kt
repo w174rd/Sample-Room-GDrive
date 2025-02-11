@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class Entity (
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id") val id: Long? = null,
+    @PrimaryKey
+    @ColumnInfo(name = "id") val id: Long? = System.currentTimeMillis(),
     @ColumnInfo(name = "name") val name: String? = null
 )
