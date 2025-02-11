@@ -1,7 +1,7 @@
 package com.w174rd.sample_room_gdrive.viewmodel
 
 import android.accounts.Account
-import android.app.Activity
+import android.content.Context
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,8 +13,13 @@ import com.google.api.client.http.javanet.NetHttpTransport
 import com.google.api.client.json.gson.GsonFactory
 import com.google.api.services.drive.Drive
 import com.google.api.services.drive.model.File
+import com.google.gson.Gson
+import com.w174rd.sample_room_gdrive.db.DataBase
+import com.w174rd.sample_room_gdrive.model.Entity
 import com.w174rd.sample_room_gdrive.model.Meta
 import com.w174rd.sample_room_gdrive.model.OnResponse
+import com.w174rd.sample_room_gdrive.model.sync.DBVersino1
+import com.w174rd.sample_room_gdrive.model.sync.EntityData
 import com.w174rd.sample_room_gdrive.utils.Attributes
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,11 +30,11 @@ class GoogleDriveViewModel: ViewModel() {
 
     val onResponse = MutableLiveData<OnResponse<Any>>()
 
-    private fun getGoogleDriveService(activity: Activity): Drive {
-        val account = GoogleSignIn.getLastSignedInAccount(activity)
+    private fun getGoogleDriveService(context: Context): Drive {
+        val account = GoogleSignIn.getLastSignedInAccount(context)
 //        val account = FirebaseAuth.getInstance().currentUser
         val credential = GoogleAccountCredential.usingOAuth2(
-            activity, listOf(
+            context, listOf(
                 "https://www.googleapis.com/auth/drive.appdata",
                 "https://www.googleapis.com/auth/drive.file"
             )
@@ -47,40 +52,21 @@ class GoogleDriveViewModel: ViewModel() {
 
     // Upload database to Google Drive
 
-    fun uploadDatabaseToDrive(activity: Activity) {
-
-        onResponse.postValue(OnResponse.loading())
-
-        val dbFile = java.io.File(activity.getDatabasePath(Attributes.database.name).absolutePath)
-        val dbFileShm = java.io.File(activity.getDatabasePath("${Attributes.database.name}-shm").absolutePath)
-        val dbFileWal = java.io.File(activity.getDatabasePath("${Attributes.database.name}-wal").absolutePath)
-
-        if (!dbFile.exists()) {
-            Log.e("GoogleDriveHelper", dbFile.path)
+    fun uploadDatabaseToDrive(context: Context, fileJson: java.io.File) {
+        if (!fileJson.exists()) {
+            Log.e("GoogleDriveHelper", fileJson.path)
             onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "dbFile no exist")))
             return
         }
 
-        val driveService = getGoogleDriveService(activity = activity)
+        val driveService = getGoogleDriveService(context = context)
 
         val fileMetadata = File().apply {
-            name = Attributes.database.name
+            name = Attributes.database.backup_name
             parents = listOf("appDataFolder")
         }
 
-        val fileMetadataShm = File().apply {
-            name = "${Attributes.database.name}-shm"
-            parents = listOf("appDataFolder")
-        }
-
-        val fileMetadataWal = File().apply {
-            name = "${Attributes.database.name}-wal"
-            parents = listOf("appDataFolder")
-        }
-
-        val mediaContent = FileContent("", dbFile)
-        val mediaContentShm = FileContent("", dbFileShm)
-        val mediaContentWal = FileContent("", dbFileWal)
+        val mediaContent = FileContent("", fileJson)
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -88,15 +74,7 @@ class GoogleDriveViewModel: ViewModel() {
                     .setFields("id")
                     .execute()
 
-                val fileShm = driveService.files().create(fileMetadataShm, mediaContentShm)
-                    .setFields("id")
-                    .execute()
-
-                val fileWal = driveService.files().create(fileMetadataWal, mediaContentWal)
-                    .setFields("id")
-                    .execute()
-
-                onResponse.postValue(OnResponse.success("Database uploaded successfully"))
+                onResponse.postValue(OnResponse.success("Database uploaded successfully \n\n${file.id}"))
             } catch (e: Exception) {
                 onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "Error uploading file: ${e.message}")))
             }
@@ -105,35 +83,44 @@ class GoogleDriveViewModel: ViewModel() {
 
     // Upload database to Google Drive
 
-    fun downloadDatabaseFromDrive(activity: Activity) {
+    fun downloadDatabaseFromDrive(db: DataBase, context: Context) {
         onResponse.postValue(OnResponse.loading())
 
-        val driveService = getGoogleDriveService(activity)
+        val driveService = getGoogleDriveService(context)
 
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // Cari file di Google Drive (appDataFolder)
-                val query = "name='${Attributes.database.name}' and 'appDataFolder' in parents"
+                val query = "name='${Attributes.database.backup_name}' and 'appDataFolder' in parents"
                 val result = driveService.files().list().setQ(query).setSpaces("appDataFolder").execute()
 
                 if (result.files.isEmpty()) {
-                    onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "Database file not found in Drive")))
+                    onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "file db not found in Drive")))
                     return@launch
                 }
 
+                val existingFileJson = java.io.File(context.getDatabasePath(Attributes.database.backup_name).absolutePath)
+
+                if (existingFileJson.exists()) {
+                    existingFileJson.delete()
+                }
+
                 val fileId = result.files[0].id
-                val dbPath = activity.getDatabasePath(Attributes.database.name).absolutePath
+                val dbPath = context.getDatabasePath(Attributes.database.backup_name).absolutePath
                 val outputStream = FileOutputStream(dbPath)
 
                 // Unduh file dari Google Drive
                 driveService.files().get(fileId).executeMediaAndDownloadTo(outputStream)
                 outputStream.close()
 
-                // **Lakukan hal yang sama untuk file SHM & WAL**
-                downloadFileFromDrive(driveService, activity, "${Attributes.database.name}-shm")
-                downloadFileFromDrive(driveService, activity, "${Attributes.database.name}-wal")
+                if (!existingFileJson.exists()) {
+                    onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "file db not found")))
+                    return@launch
+                }
 
-                onResponse.postValue(OnResponse.success("Database restore successfully"))
+                val resultdata = readAndSyncJsonFromFile(db = db, context = context)
+
+                onResponse.postValue(OnResponse.success(resultdata))
 
             } catch (e: Exception) {
                 onResponse.postValue(OnResponse.error(Meta(error = 1, code = 0, message = "Error restore file: ${e.message}")))
@@ -141,22 +128,67 @@ class GoogleDriveViewModel: ViewModel() {
         }
     }
 
-    private fun downloadFileFromDrive(driveService: Drive, activity: Activity, fileName: String) {
-        try {
-            val query = "name='$fileName' and 'appDataFolder' in parents"
-            val result = driveService.files().list().setQ(query).setSpaces("appDataFolder").execute()
+    fun saveJsonToFile(context: Context, db: DataBase) {
+        onResponse.postValue(OnResponse.loading())
 
-            if (result.files.isNotEmpty()) {
-                val fileId = result.files[0].id
-                val filePath = activity.getDatabasePath(fileName).absolutePath
-                val outputStream = FileOutputStream(filePath)
+        viewModelScope.launch(Dispatchers.IO) {
+            val fileJson = java.io.File(context.getDatabasePath(Attributes.database.backup_name).absolutePath)
+            try {
+                if (fileJson.exists()) {
+                    fileJson.delete()
+                }
 
-                driveService.files().get(fileId).executeMediaAndDownloadTo(outputStream)
-                outputStream.close()
+                val entityData = arrayListOf<EntityData>()
+                val entityLocalData = db.entityDao().getAll()
+                entityLocalData.forEach {
+                    entityData.add(EntityData(id = it.id, value = it.name))
+                }
+
+                val jsonString = Gson().toJson(DBVersino1(
+                    dbVersion = Attributes.database.version,
+                    entityData = entityData
+                ))
+                fileJson.writeText(jsonString)
+            } finally {
+                uploadDatabaseToDrive(context = context, fileJson = fileJson)
             }
-        } catch (e: Exception) {
-            Log.e("GoogleDriveHelper", "Failed to download $fileName: ${e.message}")
         }
     }
 
+    fun readAndSyncJsonFromFile(db: DataBase, context: Context): String? {
+        val fileJson = java.io.File(context.getDatabasePath(Attributes.database.backup_name).absolutePath)
+        if (fileJson.exists()) {
+            val jsonString = fileJson.readText()
+            val driveData = Gson().fromJson(jsonString, DBVersino1::class.java)
+
+            val localData = db.entityDao().getAll()
+
+            // Sync logic
+            if (driveData.dbVersion <= 1) {
+                val localIds = localData.map { it.id }.toSet()
+                val entityLocalData = arrayListOf<Entity>()
+
+                driveData.entityData.forEach { drive ->
+                    if (drive.id !in localIds) {
+                        Log.e("SYNC_PROCESS", "Menambahkan drive.id ${drive.id} ke entityLocalData")
+                        entityLocalData.add(
+                            Entity(
+                                id = drive.id,
+                                name = drive.value
+                            )
+                        )
+                    }
+                }
+
+                if (entityLocalData.isNotEmpty()) {
+                    db.entityDao().insertAll(data = entityLocalData)
+                    return "Added data: ${Gson().toJson(entityLocalData)}"
+                } else {
+                    return "No data to sync"
+                }
+            } else {
+                return "Unknown Version"
+            }
+        } else return "File does not exist"
+    }
 }

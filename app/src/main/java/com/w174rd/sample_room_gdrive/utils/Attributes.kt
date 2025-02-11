@@ -4,6 +4,7 @@ object Attributes {
 
     object database {
         const val name = "sample-db"
+        const val backup_name = "backup-sample-db.json"
         const val version = 1
     }
 

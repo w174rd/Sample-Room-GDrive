@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.view.LayoutInflater
-import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -68,5 +67,9 @@ object Functions {
             val requestCode = intent?.getIntExtra("REQUEST_CODE", -1) ?: -1
             onResult(requestCode, result.resultCode, intent)
         }
+    }
+
+    fun getVersionName(): String {
+        return "1.0.0"
     }
 }

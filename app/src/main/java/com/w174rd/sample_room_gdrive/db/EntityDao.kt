@@ -15,6 +15,9 @@ interface EntityDao {
     @Insert
     fun insert(data: Entity)
 
+    @Insert
+    fun insertAll(data: List<Entity>)
+
     @Update
     fun update(data: Entity)
 

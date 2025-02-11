@@ -92,11 +92,11 @@ class MainActivity : AppCompatActivity() {
             }
 
             btnBackup.setOnClickListener {
-                viewModelGDrive.uploadDatabaseToDrive(activity = this@MainActivity)
+                viewModelGDrive.saveJsonToFile(context = this@MainActivity, db = db)
             }
 
             btnRestore.setOnClickListener {
-                viewModelGDrive.downloadDatabaseFromDrive(activity = this@MainActivity)
+                viewModelGDrive.downloadDatabaseFromDrive(db = db, context = this@MainActivity)
             }
         }
     }
